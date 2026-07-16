@@ -59,11 +59,10 @@ export default function Hero() {
           {/* Main Hero Headline */}
           <motion.h1
             variants={itemVariants}
-            className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6"
+            className="font-heading text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6"
           >
-            Empowering Minds,
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold via-brand-orange to-brand-gold">
+            <span className="block">Empowering Minds,</span>
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-brand-gold via-brand-orange to-brand-gold">
               Shaping Future Leaders.
             </span>
           </motion.h1>
@@ -82,7 +81,7 @@ export default function Hero() {
             variants={itemVariants}
             className="flex flex-wrap gap-4 mb-16"
           >
-            <Button href="/courses" variant="gold" className="px-8 py-4 text-base shadow-xl">
+            <Button href="/courses" variant="gold" className="px-8 py-4 text-base shadow-xl border-2 border-transparent">
               Explore Courses <ArrowRight className="w-5 h-5" />
             </Button>
             <Button href="/contact" variant="outline" className="!border-white !text-white hover:!bg-white hover:!text-brand-navy px-8 py-4 text-base">
@@ -114,7 +113,7 @@ export default function Hero() {
             ].map((feature, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3.5 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-lg border border-white/5 hover:border-brand-gold/20 transition-all duration-300 group"
+                className="flex items-center gap-3.5 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 hover:border-brand-gold/20 transition-all duration-300 group h-full shadow-sm"
               >
                 <div className="p-2 rounded-md bg-white/5 text-brand-gold group-hover:bg-brand-gold group-hover:text-brand-navy transition-all duration-300">
                   {feature.icon}

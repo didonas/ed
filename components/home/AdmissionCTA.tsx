@@ -7,7 +7,7 @@ import Button from "../ui/Button";
 
 export default function AdmissionCTA() {
   return (
-    <section className="py-16 md:py-20 bg-white">
+    <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -29,7 +29,7 @@ export default function AdmissionCTA() {
               <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
                 Unlock Your True Academic Potential.
               </h2>
-              <p className="text-sm md:text-base font-light text-brand-cream/80 leading-relaxed max-w-2xl">
+              <p className="text-brand-cream/80 font-light leading-relaxed text-[15px] md:text-base lg:text-lg max-w-2xl">
                 Seats are limited for the upcoming batches to ensure high quality attention. 
                 Register for our free counseling session and secure your admission at Edison's Knowledge Hub today.
               </p>

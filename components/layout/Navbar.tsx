@@ -53,7 +53,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center">
           {/* Logo / Brand Name */}
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-            <div className="w-12 h-10 relative shrink-0 transition-transform duration-300 group-hover:scale-105">
+            <div className="w-12 h-10 relative shrink-0">
               <Image
                 src="/images/logo.png"
                 alt="Edison's Knowledge Hub Logo"
@@ -77,7 +77,7 @@ export default function Navbar() {
                   key={link.name}
                   href={link.href}
                   className={`relative font-heading text-sm font-medium tracking-wide uppercase transition-colors duration-300 hover:text-brand-gold py-1 ${
-                    isActive ? "text-brand-gold font-semibold" : "text-white/90"
+                    isActive ? "text-brand-gold font-medium" : "text-white/90"
                   }`}
                 >
                   {link.name}

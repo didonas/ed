@@ -41,7 +41,7 @@ export default function IntroStats() {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-brand-cream/40">
+    <section className="py-20 bg-brand-cream/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
@@ -60,12 +60,12 @@ export default function IntroStats() {
               A Legacy of Academic Purity and Quality Education.
             </h2>
             <div className="h-1 w-16 bg-brand-gold rounded-full" />
-            <p className="text-brand-charcoal/80 font-light leading-relaxed text-base md:text-lg">
+            <p className="text-brand-charcoal/80 font-light leading-relaxed text-[15px] md:text-base lg:text-lg">
               At Edison's Knowledge Hub, we believe in building strong fundamentals. Our courses are 
               meticulously designed to bridge the gap between classroom concepts and application, 
               instilling confidence in students to face both board exams and national level tests.
             </p>
-            <p className="text-brand-charcoal/70 font-light leading-relaxed text-sm md:text-base">
+            <p className="text-brand-charcoal/80 font-light leading-relaxed text-[15px] md:text-base lg:text-lg">
               Founded by a team of visionary educators, our institution combines traditional discipline 
               with modern learning tools. We foster an environment that respects curiosity and encourages 
               critical thinking, making education a fulfilling journey rather than a chore.

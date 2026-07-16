@@ -30,7 +30,7 @@ export default function WhyChooseUs() {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-white relative">
+    <section className="py-20 bg-white relative">
       {/* Decorative background grid/dots */}
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[radial-gradient(#1B2340_1px,transparent_1px)] [background-size:16px_16px]" />
 

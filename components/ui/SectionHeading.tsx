@@ -53,7 +53,7 @@ export default function SectionHeading({
       <div className={`h-1 w-16 bg-brand-gold mt-4 mb-5 ${align === "center" ? "mx-auto" : "mr-auto"} rounded-full`} />
 
       {description && (
-        <p className={`text-base md:text-lg font-light leading-relaxed ${descColor}`}>
+        <p className={`text-[15px] md:text-base lg:text-lg font-light leading-relaxed ${descColor}`}>
           {description}
         </p>
       )}

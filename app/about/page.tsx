@@ -181,7 +181,7 @@ export default function AboutPage() {
             description="A visual look at how we expanded our campus, faculty strength, and success rates over the years."
           />
 
-          <div className="relative border-l border-brand-gold/30 md:border-l-0 md:before:absolute md:before:top-1/2 md:before:left-0 md:before:w-full md:before:h-[1px] md:before:bg-brand-gold/30 md:before:-translate-y-1/2 min-h-[300px] flex flex-col md:flex-row justify-between gap-12 md:gap-6 pl-6 md:pl-0 pt-4">
+          <div className="relative border-l border-brand-gold/30 md:border-l-0 md:before:absolute md:before:top-1/2 md:before:left-0 md:before:w-full md:before:h-[1px] md:before:bg-brand-gold/30 md:before:-translate-y-1/2 flex flex-col md:flex-row justify-between gap-12 md:gap-6 pl-6 md:pl-0 pt-4 items-stretch">
             {milestones.map((m, i) => (
               <motion.div
                 key={i}
@@ -189,17 +189,19 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.15 }}
-                className="relative md:w-1/4 md:text-center space-y-3"
+                className="relative md:w-1/4 md:text-center flex flex-col justify-between"
               >
                 {/* Timeline dot */}
                 <div className="absolute -left-[31px] top-1.5 md:-left-0 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-4 h-4 rounded-full bg-brand-gold border-4 border-white shadow-md z-10" />
 
-                <div className="bg-brand-cream/20 md:bg-white p-5 rounded-xl border border-brand-navy/5 md:border-0 hover:shadow-md transition-shadow">
-                  <span className="inline-block font-heading text-2xl font-extrabold text-brand-orange mb-1">
-                    {m.year}
-                  </span>
-                  <h4 className="font-heading text-base font-bold text-brand-navy mb-2">{m.title}</h4>
-                  <p className="text-xs text-brand-charcoal/80 font-light leading-relaxed">{m.desc}</p>
+                <div className="bg-brand-cream/20 md:bg-white p-5 rounded-2xl border border-brand-navy/5 md:border md:border-brand-navy/5 hover:shadow-md transition-shadow flex-grow flex flex-col text-left md:text-center justify-between space-y-2">
+                  <div>
+                    <span className="inline-block font-heading text-2xl font-extrabold text-brand-orange mb-1">
+                      {m.year}
+                    </span>
+                    <h4 className="font-heading text-base font-bold text-brand-navy mb-2">{m.title}</h4>
+                    <p className="text-xs text-brand-charcoal/80 font-light leading-relaxed">{m.desc}</p>
+                  </div>
                 </div>
               </motion.div>
             ))}

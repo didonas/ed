@@ -35,7 +35,7 @@ export default function Facilities() {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-white relative">
+    <section className="py-20 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           title="State-of-the-Art Infrastructure"
