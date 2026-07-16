@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
-import NewsTicker from "@/components/layout/NewsTicker";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import WhatsAppFAB from "@/components/shared/WhatsAppFAB";
-import EddieAssistant from "@/components/shared/EddieAssistant";
+import ClientLayoutWrapper from "./ClientLayoutWrapper";
 
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
   display: "swap",
-});
+  });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -49,23 +45,9 @@ export default function RootLayout({
       className={`${manrope.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-brand-cream text-brand-charcoal font-sans">
-        {/* Horizontal Announcements Ticker */}
-        <NewsTicker />
-        
-        {/* Sticky Header Navbar */}
-        <Navbar />
-        
-        {/* Main Content Area */}
-        <main className="flex-grow">{children}</main>
-        
-        {/* Institution Footer */}
-        <Footer />
-        
-        {/* Floating Quick Action Contacts */}
-        <WhatsAppFAB />
-
-        {/* Eddie Digital Mascot Guide */}
-        <EddieAssistant />
+        <ClientLayoutWrapper>
+          {children}
+        </ClientLayoutWrapper>
       </body>
     </html>
   );

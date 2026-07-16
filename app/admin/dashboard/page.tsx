@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -23,21 +23,27 @@ import {
   Bell,
   CheckCircle,
   ChevronDown,
+  ChevronRight,
   X,
   Phone,
   Eye,
   Menu,
-  ChevronRight,
   TrendingUp,
   Inbox,
   ArrowUpDown,
   Copy,
   Check,
+  Settings,
+  Grid,
+  FileText,
+  User,
+  GraduationCap,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-type TabOption = "dashboard" | "enquiries" | "notifications";
+type TabOption = "dashboard" | "enquiries" | "notifications" | "settings";
 
 interface NotificationLog {
   id: string;
@@ -53,16 +59,18 @@ export default function AdminDashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Active view tab state
+  // Layout states
   const [activeTab, setActiveTab] = useState<TabOption>("dashboard");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isAdminBellOpen, setIsAdminBellOpen] = useState(false);
+  const adminBellRef = useRef<HTMLDivElement>(null);
 
   // Data states
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [notificationsLog, setNotificationsLog] = useState<NotificationLog[]>([]);
   const [loadingData, setLoadingData] = useState(false);
 
-  // Controls states
+  // Student enquiries list controls states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterClass, setFilterClass] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -70,6 +78,12 @@ export default function AdminDashboardPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  // Settings states
+  const [instName, setInstName] = useState("Edison's Knowledge Hub");
+  const [instPhone, setInstPhone] = useState("+91 98765 43210");
+  const [instAddress, setInstAddress] = useState("12, Ring Road, Lajpat Nagar IV, New Delhi");
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
 
   // Modal States
   const [viewingEnquiry, setViewingEnquiry] = useState<Enquiry | null>(null);
@@ -91,11 +105,11 @@ export default function AdminDashboardPage() {
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Desktop calling popup modal state
+  // Desktop call popup states
   const [desktopCallNumber, setDesktopCallNumber] = useState<string | null>(null);
   const [copiedNumber, setCopiedNumber] = useState(false);
 
-  // 1. Session verification and redirect if unauthenticated
+  // 1. Session verification on mount
   useEffect(() => {
     async function checkAuth() {
       const { data } = await supabase.auth.getSession();
@@ -110,13 +124,24 @@ export default function AdminDashboardPage() {
     checkAuth();
   }, [router]);
 
+  // Click outside to close admin bell dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (adminBellRef.current && !adminBellRef.current.contains(event.target as Node)) {
+        setIsAdminBellOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // 2. Fetch database rows
   const loadData = async () => {
     setLoadingData(true);
     const enquiryRows = await fetchAdminEnquiries();
     setEnquiries(enquiryRows);
 
-    // Fetch notifications log by querying directly (joined with enquiries name)
+    // Fetch notifications log
     try {
       const { data, error } = await supabase
         .from("notifications")
@@ -144,9 +169,8 @@ export default function AdminDashboardPage() {
         setNotificationsLog(log);
       }
     } catch (err) {
-      console.error("Error loading notification logs:", err);
+      console.error("Error loading notifications:", err);
     }
-
     setLoadingData(false);
   };
 
@@ -156,7 +180,7 @@ export default function AdminDashboardPage() {
     router.push("/admin/login");
   };
 
-  // 4. Change enquiry Status dropdown
+  // 4. Change status dropdown handler
   const handleStatusChange = async (id: string, newStatus: string) => {
     const success = await updateEnquiryStatus(id, newStatus);
     if (success) {
@@ -219,7 +243,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 7. Send counseling Notification
+  // 7. Send notification alert to student
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!notifyingEnquiry) return;
@@ -228,7 +252,7 @@ export default function AdminDashboardPage() {
     setNotifLoading(true);
 
     if (!notifTitle.trim() || !notifMessage.trim()) {
-      setNotifError("Title and Message body are required.");
+      setNotifError("Title and Message cannot be empty.");
       setNotifLoading(false);
       return;
     }
@@ -241,7 +265,6 @@ export default function AdminDashboardPage() {
 
     if (success) {
       setNotifSuccess(true);
-      // Append to local log list
       const newLog: NotificationLog = {
         id: Math.random().toString(),
         studentName: notifyingEnquiry.name,
@@ -262,7 +285,7 @@ export default function AdminDashboardPage() {
     setNotifLoading(false);
   };
 
-  // 8. Call Trigger details (handles mobile dialer vs desktop popup copy)
+  // 8. Call student handler
   const handleCallStudent = (phoneStr: string) => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile) {
@@ -273,14 +296,12 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Copy phone helper
   const copyPhoneNumber = (phoneStr: string) => {
     navigator.clipboard.writeText(phoneStr);
     setCopiedNumber(true);
     setTimeout(() => setCopiedNumber(false), 2000);
   };
 
-  // Helper modals
   const openEditModal = (enq: Enquiry) => {
     setEditingEnquiry(enq);
     setEditName(enq.name);
@@ -301,7 +322,7 @@ export default function AdminDashboardPage() {
     setNotifSuccess(false);
   };
 
-  // 9. Sorting & Filtering calculations
+  // 9. Sorting & Filtering
   const filteredEnquiries = enquiries
     .filter((e) => {
       const matchesSearch =
@@ -330,7 +351,6 @@ export default function AdminDashboardPage() {
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
-  // Pagination bounds
   const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
   const paginatedEnquiries = filteredEnquiries.slice(
     (currentPage - 1) * itemsPerPage,
@@ -339,6 +359,7 @@ export default function AdminDashboardPage() {
 
   // Statistics counters
   const totalCount = enquiries.length;
+  const newEnquiriesCount = enquiries.filter((e) => e.status === "New").length;
   
   const getTodayCount = () => {
     const today = new Date();
@@ -355,6 +376,20 @@ export default function AdminDashboardPage() {
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   };
 
+  // Save Settings
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsSuccess(true);
+    setTimeout(() => setSettingsSuccess(false), 2000);
+  };
+
+  // Top header bell click handles redirection to enquiries filtered by 'New'
+  const handleBellNotificationClick = () => {
+    setFilterStatus("New");
+    setActiveTab("enquiries");
+    setIsAdminBellOpen(false);
+  };
+
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-brand-cream/10 flex items-center justify-center">
@@ -364,57 +399,59 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-cream/5 text-brand-charcoal flex flex-col md:flex-row relative">
+    <div className="min-h-screen bg-brand-cream/10 flex flex-col md:flex-row text-brand-charcoal overflow-hidden font-sans">
       
-      {/* 1. Dashboard Sidebar (Desktop navigation menu) */}
-      <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-brand-navy text-white flex flex-col justify-between p-6 z-40 transition-transform duration-300 md:translate-x-0 ${
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      {/* ==========================================
+          LEFT SIDEBAR (Fixed & Full Height)
+          ========================================== */}
+      <aside className={`fixed top-0 left-0 h-screen w-64 bg-brand-navy text-white flex flex-col justify-between p-6 z-40 transition-transform duration-300 md:translate-x-0 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}>
         <div className="space-y-8">
-          {/* Logo Brand Header */}
+          {/* Logo brand header */}
           <div className="flex items-center gap-3 border-b border-white/10 pb-4">
             <div className="w-10 h-10 rounded-full border border-brand-gold bg-white/5 flex items-center justify-center overflow-hidden shrink-0 relative p-1.5">
               <Image
                 src="/images/logo.png"
-                alt="Edison Badge"
+                alt="Logo Badge"
                 width={36}
                 height={36}
                 className="object-contain"
               />
             </div>
-            <div>
+            <div className="text-left">
               <h2 className="font-heading text-sm font-bold tracking-wider leading-tight">
-                EDISON'S HUB
+                EDISON ADMIN
               </h2>
               <span className="text-[9px] uppercase font-bold text-brand-gold tracking-widest block mt-0.5">
-                Admin Panel
+                Dashboard Portal
               </span>
             </div>
           </div>
 
-          {/* Nav links */}
-          <nav className="flex flex-col gap-2.5">
+          {/* Navigation links */}
+          <nav className="flex flex-col gap-2">
             <button
               onClick={() => {
                 setActiveTab("dashboard");
-                setIsSidebarOpen(false);
+                setIsMobileSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
                 activeTab === "dashboard"
                   ? "bg-brand-gold text-brand-navy shadow-lg"
                   : "text-white/70 hover:text-white hover:bg-white/5"
               }`}
             >
-              <TrendingUp className="w-4 h-4" />
+              <Grid className="w-4 h-4" />
               <span>Dashboard</span>
             </button>
-            
+
             <button
               onClick={() => {
                 setActiveTab("enquiries");
-                setIsSidebarOpen(false);
+                setIsMobileSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
                 activeTab === "enquiries"
                   ? "bg-brand-gold text-brand-navy shadow-lg"
                   : "text-white/70 hover:text-white hover:bg-white/5"
@@ -427,28 +464,49 @@ export default function AdminDashboardPage() {
             <button
               onClick={() => {
                 setActiveTab("notifications");
-                setIsSidebarOpen(false);
+                setIsMobileSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
                 activeTab === "notifications"
                   ? "bg-brand-gold text-brand-navy shadow-lg"
                   : "text-white/70 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Bell className="w-4 h-4" />
+              <FileText className="w-4 h-4" />
               <span>Notifications</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("settings");
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${
+                activeTab === "settings"
+                  ? "bg-brand-gold text-brand-navy shadow-lg"
+                  : "text-white/70 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
             </button>
           </nav>
         </div>
 
-        {/* Footer actions logout */}
-        <div className="border-t border-white/10 pt-4 flex flex-col gap-2 text-xs">
-          <div className="text-white/50 px-2 leading-tight">
-            Admin: <strong>{user?.email?.split("@")[0]}</strong>
+        {/* Sidebar Footer */}
+        <div className="border-t border-white/10 pt-4 space-y-3">
+          <div className="flex items-center gap-2 px-2 text-xs">
+            <div className="w-7 h-7 rounded-full bg-brand-gold text-brand-navy flex items-center justify-center font-bold">
+              {user?.email?.[0]?.toUpperCase() || "A"}
+            </div>
+            <span className="text-white/75 truncate max-w-[150px] font-medium">
+              {user?.email}
+            </span>
           </div>
+          
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-brand-orange/10 hover:text-brand-orange border border-white/5 transition-all cursor-pointer font-bold uppercase"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-brand-orange/10 hover:text-brand-orange border border-white/5 transition-all cursor-pointer font-bold uppercase text-xs"
           >
             <LogOut className="w-4 h-4 text-brand-orange" />
             <span>Logout</span>
@@ -456,102 +514,183 @@ export default function AdminDashboardPage() {
         </div>
       </aside>
 
-      {/* Sidebar mobile backdrop overlay */}
-      {isSidebarOpen && (
+      {/* Mobile drawer backdrop */}
+      {isMobileSidebarOpen && (
         <div
-          onClick={() => setIsSidebarOpen(false)}
-          className="fixed inset-0 bg-brand-navy/30 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-brand-navy/35 backdrop-blur-sm z-30 md:hidden"
         />
       )}
 
-      {/* Main container content */}
-      <main className="flex-grow min-h-screen p-4 sm:p-8 flex flex-col gap-6 w-full max-w-7xl mx-auto overflow-hidden">
+      {/* ==========================================
+          MAIN AREA: CONTENT WRAPPER
+          ========================================== */}
+      <div className="flex-grow flex flex-col md:pl-64 min-h-screen">
         
-        {/* Mobile Top Bar */}
-        <div className="flex md:hidden justify-between items-center bg-brand-navy text-white p-4 rounded-2xl shadow">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 hover:bg-white/5 rounded-xl cursor-pointer"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <span className="font-heading font-extrabold text-sm uppercase tracking-wider text-brand-gold">
-            Edison Admin
-          </span>
-          <button
-            onClick={handleLogout}
-            className="p-2 hover:bg-red-500/10 rounded-xl cursor-pointer text-brand-orange"
-            aria-label="Logout"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-
-        {loadingData ? (
-          <div className="flex-grow flex items-center justify-center py-24">
-            <div className="w-10 h-10 border-4 border-brand-navy border-t-brand-gold rounded-full animate-spin" />
+        {/* ==========================================
+            TOP HEADER
+            ========================================== */}
+        <header className="h-16 border-b border-brand-navy/5 bg-white px-6 py-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+          {/* Header left */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-2 hover:bg-brand-cream/45 rounded-xl md:hidden cursor-pointer"
+              aria-label="Toggle Navigation"
+            >
+              <Menu className="w-5 h-5 text-brand-navy" />
+            </button>
+            <h1 className="font-heading font-extrabold text-sm sm:text-base tracking-wider text-brand-navy uppercase">
+              {activeTab === "dashboard"
+                ? "Admissions Dashboard"
+                : activeTab === "enquiries"
+                ? "Enquiries Manager"
+                : activeTab === "notifications"
+                ? "Notice Logs"
+                : "Portal Settings"}
+            </h1>
           </div>
-        ) : (
+
+          {/* Header right controls */}
+          <div className="flex items-center gap-4">
+            
+            {/* Admin Notification Bell */}
+            <div className="relative" ref={adminBellRef}>
+              <button
+                onClick={() => setIsAdminBellOpen(!isAdminBellOpen)}
+                className="p-2 rounded-full hover:bg-brand-cream/50 transition-colors relative cursor-pointer focus:outline-none"
+              >
+                <Bell className={`w-5 h-5 text-brand-navy ${newEnquiriesCount > 0 ? "animate-pulse" : ""}`} />
+                {newEnquiriesCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white">
+                    {newEnquiriesCount}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {isAdminBellOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-2 w-72 bg-white border border-brand-navy/10 rounded-2xl shadow-xl z-50 overflow-hidden text-left"
+                  >
+                    <div className="bg-brand-navy text-white px-4 py-2.5 flex justify-between items-center text-xs font-bold uppercase tracking-wider">
+                      <span>Admissions Alert</span>
+                      <span className="text-[10px] text-brand-gold">{newEnquiriesCount} New</span>
+                    </div>
+                    <div className="p-3">
+                      {newEnquiriesCount === 0 ? (
+                        <p className="text-xs text-brand-muted font-light py-4 text-center">
+                          No pending new enquiries.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-brand-charcoal font-light leading-relaxed">
+                            You have <strong>{newEnquiriesCount}</strong> unprocessed student enquiries waiting.
+                          </p>
+                          <button
+                            onClick={handleBellNotificationClick}
+                            className="w-full py-2 bg-brand-navy hover:bg-brand-gold text-white hover:text-brand-navy font-bold rounded-lg text-[10px] uppercase tracking-wider transition-colors cursor-pointer text-center"
+                          >
+                            Process Enquiries
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Admin Profile */}
+            <div className="flex items-center gap-2 border-l border-brand-navy/5 pl-4">
+              <div className="w-8 h-8 rounded-full bg-brand-navy/5 text-brand-navy flex items-center justify-center font-bold text-xs uppercase shadow-inner border border-brand-navy/10">
+                {user?.email?.[0] || "A"}
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="text-xs font-bold text-brand-navy leading-none">
+                  Admin Officer
+                </div>
+                <span className="text-[9px] text-brand-muted font-light tracking-wide mt-0.5 block">
+                  Edison Institution
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </header>
+
+        {/* ==========================================
+            TAB BODY CONTENT PANELS
+            ========================================== */}
+        <div className="p-4 sm:p-6 flex-grow overflow-y-auto">
           <AnimatePresence mode="wait">
             
-            {/* TAB A: OVERVIEW DASHBOARD */}
+            {/* PANEL A: DASHBOARD HOMEPAGE */}
             {activeTab === "dashboard" && (
               <motion.div
-                key="dashboard-tab"
+                key="db-home"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 className="space-y-6 text-left"
               >
-                <div>
-                  <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-brand-navy">
-                    Dashboard Overview
-                  </h1>
-                  <p className="text-xs text-brand-muted font-light mt-1 uppercase tracking-wider">
-                    Edison's Knowledge Hub admissions analytics
-                  </p>
-                </div>
-
-                {/* Grid stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4">
-                    <div className="p-4 rounded-2xl bg-brand-navy/5 text-brand-navy shrink-0">
-                      <Users className="w-6 h-6" />
+                {/* Statistics Cards grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  
+                  <div className="bg-white p-5 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4">
+                    <div className="p-3 bg-brand-navy/5 text-brand-navy rounded-2xl shrink-0">
+                      <Users className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-xs text-brand-muted font-medium uppercase tracking-wider block">
+                      <span className="text-[10px] text-brand-muted font-semibold uppercase tracking-wider block">
                         Total enquiries
                       </span>
-                      <span className="text-2xl md:text-3xl font-extrabold text-brand-navy mt-0.5 block">
+                      <span className="text-xl md:text-2xl font-extrabold text-brand-navy block mt-0.5">
                         {totalCount}
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4">
-                    <div className="p-4 rounded-2xl bg-brand-gold/10 text-brand-gold shrink-0">
-                      <Calendar className="w-6 h-6" />
+                  <div className="bg-white p-5 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4">
+                    <div className="p-3 bg-brand-gold/10 text-brand-gold rounded-2xl shrink-0">
+                      <Calendar className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-xs text-brand-muted font-medium uppercase tracking-wider block">
+                      <span className="text-[10px] text-brand-muted font-semibold uppercase tracking-wider block">
                         Today's enquiries
                       </span>
-                      <span className="text-2xl md:text-3xl font-extrabold text-brand-navy mt-0.5 block">
+                      <span className="text-xl md:text-2xl font-extrabold text-brand-navy block mt-0.5">
                         {getTodayCount()}
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4 sm:col-span-2 lg:col-span-1">
-                    <div className="p-4 rounded-2xl bg-brand-orange/10 text-brand-orange shrink-0">
-                      <TrendingUp className="w-6 h-6" />
+                  <div className="bg-white p-5 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4">
+                    <div className="p-3 bg-brand-orange/10 text-brand-orange rounded-2xl shrink-0">
+                      <AlertCircle className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-xs text-brand-muted font-medium uppercase tracking-wider block">
-                        Active Conversion Rate
+                      <span className="text-[10px] text-brand-muted font-semibold uppercase tracking-wider block">
+                        Pending Action (New)
                       </span>
-                      <span className="text-2xl md:text-3xl font-extrabold text-brand-navy mt-0.5 block">
+                      <span className="text-xl md:text-2xl font-extrabold text-brand-navy block mt-0.5">
+                        {newEnquiriesCount}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-3xl border border-brand-navy/10 shadow-sm flex items-center gap-4">
+                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl shrink-0">
+                      <GraduationCap className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-brand-muted font-semibold uppercase tracking-wider block">
+                        Conversion Rate
+                      </span>
+                      <span className="text-xl md:text-2xl font-extrabold text-brand-navy block mt-0.5">
                         {totalCount > 0
                           ? Math.round(
                               (enquiries.filter((e) => e.status === "Admitted").length / totalCount) * 100
@@ -561,24 +700,28 @@ export default function AdminDashboardPage() {
                       </span>
                     </div>
                   </div>
+
                 </div>
 
-                {/* Sub grid elements */}
+                {/* Second Row: Charts & Logs */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Interested Courses Breakdown List */}
-                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex flex-col">
+                  
+                  {/* Interested Courses Charts list */}
+                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex flex-col justify-between min-h-[340px]">
                     <div className="border-b border-brand-navy/5 pb-3 mb-4">
-                      <h3 className="font-heading text-sm font-bold text-brand-navy uppercase tracking-wider">
-                        Interested Courses
+                      <h3 className="font-heading text-sm font-bold text-brand-navy uppercase tracking-wider flex items-center gap-1.5">
+                        <TrendingUp className="w-4 h-4 text-brand-gold" />
+                        <span>Interested Courses distribution</span>
                       </h3>
-                      <span className="text-[10px] text-brand-muted font-light block">
-                        Enquiry distribution by curriculum interests
+                      <span className="text-[10px] text-brand-muted font-light mt-0.5 block">
+                        Visualizing active course curriculum registrations
                       </span>
                     </div>
-                    <div className="flex-grow space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                    
+                    <div className="flex-grow space-y-3.5 max-h-[260px] overflow-y-auto pr-1">
                       {getCourseBreakdown().length === 0 ? (
                         <div className="py-12 text-center text-xs text-brand-muted font-light">
-                          No submissions recorded yet.
+                          No student submissions registered.
                         </div>
                       ) : (
                         getCourseBreakdown().map(([course, count], idx) => (
@@ -587,10 +730,12 @@ export default function AdminDashboardPage() {
                               <span className="text-brand-charcoal">{course}</span>
                               <span className="text-brand-navy">{count} enquiries</span>
                             </div>
-                            <div className="w-full h-2 bg-brand-cream/45 border border-brand-navy/5 rounded-full overflow-hidden">
-                              <div
+                            <div className="w-full h-2 bg-brand-cream/55 border border-brand-navy/5 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(count / totalCount) * 100}%` }}
+                                transition={{ duration: 0.5, delay: idx * 0.08 }}
                                 className="h-full bg-brand-navy rounded-full"
-                                style={{ width: `${(count / totalCount) * 100}%` }}
                               />
                             </div>
                           </div>
@@ -599,29 +744,30 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Recent Students List */}
-                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex flex-col">
+                  {/* Recent student entries */}
+                  <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm flex flex-col justify-between min-h-[340px]">
                     <div className="border-b border-brand-navy/5 pb-3 mb-4 flex justify-between items-center">
                       <div>
                         <h3 className="font-heading text-sm font-bold text-brand-navy uppercase tracking-wider">
-                          Recent students
+                          Recent Enquiries
                         </h3>
-                        <span className="text-[10px] text-brand-muted font-light block">
-                          Last 5 newly submitted entries
+                        <span className="text-[10px] text-brand-muted font-light mt-0.5 block">
+                          Last 5 admissions submissions
                         </span>
                       </div>
                       <button
                         onClick={() => setActiveTab("enquiries")}
-                        className="text-[11px] font-bold text-brand-orange hover:text-brand-navy transition-colors flex items-center gap-0.5"
+                        className="text-[10px] uppercase font-extrabold text-brand-orange hover:text-brand-navy transition-colors cursor-pointer flex items-center gap-0.5"
                       >
-                        <span>View All</span>
-                        <ChevronRight className="w-3 h-3" />
+                        <span>View Table</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="flex-grow space-y-3">
+
+                    <div className="flex-grow space-y-2.5">
                       {enquiries.slice(0, 5).length === 0 ? (
                         <div className="py-12 text-center text-xs text-brand-muted font-light">
-                          No students records yet.
+                          No enquiries registered.
                         </div>
                       ) : (
                         enquiries.slice(0, 5).map((item) => (
@@ -630,8 +776,8 @@ export default function AdminDashboardPage() {
                             className="flex justify-between items-center p-3 rounded-2xl bg-brand-cream/10 border border-brand-navy/5"
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-brand-navy/5 text-brand-navy flex items-center justify-center font-bold text-xs">
-                                {item.name[0]}
+                              <div className="w-8 h-8 rounded-full bg-brand-navy/5 border border-brand-navy/10 text-brand-navy flex items-center justify-center font-bold text-xs">
+                                {item.name[0]?.toUpperCase()}
                               </div>
                               <div className="text-left">
                                 <h4 className="text-xs sm:text-sm font-bold text-brand-navy">
@@ -642,7 +788,7 @@ export default function AdminDashboardPage() {
                                 </span>
                               </div>
                             </div>
-                            <span className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                            <span className={`text-[8.5px] uppercase font-bold px-2 py-0.5 rounded-full ${
                               item.status === "New"
                                 ? "bg-blue-100 text-blue-800"
                                 : item.status === "Contacted"
@@ -658,11 +804,64 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </div>
+
                 </div>
+
+                {/* Third Row: Recent Sent Notifications logs */}
+                <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm">
+                  <div className="border-b border-brand-navy/5 pb-3 mb-4 flex justify-between items-center">
+                    <div>
+                      <h3 className="font-heading text-sm font-bold text-brand-navy uppercase tracking-wider">
+                        Recent Notifications
+                      </h3>
+                      <span className="text-[10px] text-brand-muted font-light mt-0.5 block">
+                        Last 5 counselor alerts sent out
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab("notifications")}
+                      className="text-[10px] uppercase font-extrabold text-brand-orange hover:text-brand-navy transition-colors cursor-pointer"
+                    >
+                      View Logs
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {notificationsLog.slice(0, 5).length === 0 ? (
+                      <div className="py-12 text-center text-xs text-brand-muted font-light">
+                        No notices sent yet.
+                      </div>
+                    ) : (
+                      notificationsLog.slice(0, 5).map((log) => (
+                        <div
+                          key={log.id}
+                          className="p-3.5 rounded-2xl bg-brand-cream/5 border border-brand-navy/5 flex justify-between items-start text-xs text-left"
+                        >
+                          <div className="space-y-1">
+                            <span className="text-[9px] uppercase font-bold text-brand-gold tracking-wide">
+                              To: {log.studentName} ({log.phone})
+                            </span>
+                            <h4 className="font-semibold text-brand-navy">{log.title}</h4>
+                            <p className="text-brand-charcoal font-light leading-relaxed whitespace-pre-line mt-1 max-w-xl">
+                              {log.message}
+                            </p>
+                          </div>
+                          <span className="text-[9px] text-brand-muted/80 font-medium whitespace-nowrap">
+                            {new Date(log.created_at).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
               </motion.div>
             )}
 
-            {/* TAB B: STUDENT ENQUIRIES LIST VIEW */}
+            {/* PANEL B: STUDENT ENQUIRIES TABLE */}
             {activeTab === "enquiries" && (
               <motion.div
                 key="enquiries-tab"
@@ -671,16 +870,7 @@ export default function AdminDashboardPage() {
                 exit={{ opacity: 0, y: -15 }}
                 className="space-y-6 text-left"
               >
-                <div>
-                  <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-brand-navy">
-                    Student Enquiries
-                  </h1>
-                  <p className="text-xs text-brand-muted font-light mt-1 uppercase tracking-wider">
-                    Search, filter, sort, and manage student submissions
-                  </p>
-                </div>
-
-                {/* Filters, search, sort bar controls */}
+                {/* Search query, filters, sorts */}
                 <div className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm space-y-4">
                   <div className="flex flex-col lg:flex-row gap-4 justify-between">
                     
@@ -695,11 +885,11 @@ export default function AdminDashboardPage() {
                           setCurrentPage(1);
                         }}
                         placeholder="Search student name or phone number..."
-                        className="w-full pl-11 pr-4 py-2.5 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold placeholder-brand-muted/70"
+                        className="w-full pl-11 pr-4 py-2.5 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold placeholder-brand-muted/70 bg-brand-cream/5"
                       />
                     </div>
 
-                    {/* Filter and Sort controls */}
+                    {/* Filter class, status, sorting */}
                     <div className="flex flex-wrap items-center gap-3">
                       
                       {/* Filter Class */}
@@ -710,7 +900,7 @@ export default function AdminDashboardPage() {
                             setFilterClass(e.target.value);
                             setCurrentPage(1);
                           }}
-                          className="appearance-none bg-brand-cream/5 border border-brand-navy/15 rounded-xl py-2 pl-4 pr-10 text-xs font-bold text-brand-navy uppercase tracking-wider focus:outline-none cursor-pointer"
+                          className="appearance-none bg-brand-cream/5 border border-brand-navy/15 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-brand-navy uppercase tracking-wider focus:outline-none cursor-pointer"
                         >
                           <option value="all">Class: All</option>
                           <option value="Classes 1–5">Classes 1–5</option>
@@ -720,7 +910,7 @@ export default function AdminDashboardPage() {
                           <option value="College">College</option>
                           <option value="Other">Other</option>
                         </select>
-                        <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-3 text-brand-navy/60 pointer-events-none" />
+                        <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-3.5 text-brand-navy/60 pointer-events-none" />
                       </div>
 
                       {/* Filter Status */}
@@ -731,7 +921,7 @@ export default function AdminDashboardPage() {
                             setFilterStatus(e.target.value);
                             setCurrentPage(1);
                           }}
-                          className="appearance-none bg-brand-cream/5 border border-brand-navy/15 rounded-xl py-2 pl-4 pr-10 text-xs font-bold text-brand-navy uppercase tracking-wider focus:outline-none cursor-pointer"
+                          className="appearance-none bg-brand-cream/5 border border-brand-navy/15 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-brand-navy uppercase tracking-wider focus:outline-none cursor-pointer"
                         >
                           <option value="all">Status: All</option>
                           <option value="New">New</option>
@@ -739,10 +929,10 @@ export default function AdminDashboardPage() {
                           <option value="Follow-up">Follow-up</option>
                           <option value="Admitted">Admitted</option>
                         </select>
-                        <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-3 text-brand-navy/60 pointer-events-none" />
+                        <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-3.5 text-brand-navy/60 pointer-events-none" />
                       </div>
 
-                      {/* Sort Toggle */}
+                      {/* Sort toggles */}
                       <button
                         onClick={() => {
                           if (sortField === "date") {
@@ -753,14 +943,13 @@ export default function AdminDashboardPage() {
                           }
                           setCurrentPage(1);
                         }}
-                        className={`px-3 py-2 border rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+                        className={`px-3 py-2.5 border rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
                           sortField === "date"
                             ? "bg-brand-navy/5 text-brand-navy border-brand-navy/20"
-                            : "border-brand-navy/10 text-brand-muted hover:border-brand-gold"
+                            : "border-brand-navy/10 text-brand-muted hover:border-brand-gold bg-white"
                         }`}
-                        title="Sort by Date"
                       >
-                        <ArrowUpDown className="w-3.5 h-3.5" />
+                        <ArrowUpDown className="w-3.5 h-3.5 text-brand-gold" />
                         <span>Date ({sortField === "date" ? sortOrder : "desc"})</span>
                       </button>
 
@@ -774,14 +963,13 @@ export default function AdminDashboardPage() {
                           }
                           setCurrentPage(1);
                         }}
-                        className={`px-3 py-2 border rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+                        className={`px-3 py-2.5 border rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
                           sortField === "name"
                             ? "bg-brand-navy/5 text-brand-navy border-brand-navy/20"
-                            : "border-brand-navy/10 text-brand-muted hover:border-brand-gold"
+                            : "border-brand-navy/10 text-brand-muted hover:border-brand-gold bg-white"
                         }`}
-                        title="Sort by Name"
                       >
-                        <ArrowUpDown className="w-3.5 h-3.5" />
+                        <ArrowUpDown className="w-3.5 h-3.5 text-brand-gold" />
                         <span>Name ({sortField === "name" ? sortOrder : "A-Z"})</span>
                       </button>
 
@@ -789,7 +977,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Table list */}
+                {/* Table Container */}
                 <div className="bg-white rounded-3xl border border-brand-navy/10 shadow-sm overflow-hidden flex flex-col justify-between min-h-[420px]">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -810,7 +998,7 @@ export default function AdminDashboardPage() {
                           <tr>
                             <td colSpan={8} className="py-24 text-center text-brand-muted font-light">
                               <Inbox className="w-12 h-12 stroke-1 text-brand-navy/20 mx-auto mb-2" />
-                              <p>No student records found.</p>
+                              <p>No student records found matching details.</p>
                             </td>
                           </tr>
                         ) : (
@@ -865,16 +1053,16 @@ export default function AdminDashboardPage() {
                               <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-1.5">
                                   
-                                  {/* View Button */}
+                                  {/* View Details Sheet */}
                                   <button
                                     onClick={() => setViewingEnquiry(item)}
                                     className="p-1.5 text-brand-navy hover:bg-brand-navy/10 rounded-lg transition-colors cursor-pointer"
-                                    title="View Details"
+                                    title="View Sheet"
                                   >
                                     <Eye className="w-4 h-4" />
                                   </button>
 
-                                  {/* Call Button */}
+                                  {/* Call action */}
                                   <button
                                     onClick={() => handleCallStudent(item.phone)}
                                     className="p-1.5 text-brand-gold hover:bg-brand-gold/10 rounded-lg transition-colors cursor-pointer"
@@ -883,7 +1071,7 @@ export default function AdminDashboardPage() {
                                     <Phone className="w-4 h-4" />
                                   </button>
 
-                                  {/* Send Notice Button */}
+                                  {/* Alert notices */}
                                   <button
                                     onClick={() => openNotificationModal(item)}
                                     className="p-1.5 text-brand-orange hover:bg-brand-orange/15 rounded-lg transition-colors cursor-pointer"
@@ -892,16 +1080,16 @@ export default function AdminDashboardPage() {
                                     <Bell className="w-4 h-4" />
                                   </button>
 
-                                  {/* Edit Button */}
+                                  {/* Edit Details */}
                                   <button
                                     onClick={() => openEditModal(item)}
                                     className="p-1.5 text-brand-navy hover:bg-brand-navy/10 rounded-lg transition-colors cursor-pointer"
-                                    title="Edit details"
+                                    title="Edit Profile"
                                   >
                                     <Edit className="w-4 h-4" />
                                   </button>
 
-                                  {/* Delete Button */}
+                                  {/* Delete confirmation */}
                                   {deleteConfirmId === item.id ? (
                                     <div className="flex items-center gap-1 pl-2">
                                       <button
@@ -926,7 +1114,7 @@ export default function AdminDashboardPage() {
                                       <Trash2 className="w-4 h-4" />
                                     </button>
                                   )}
-                                  
+
                                 </div>
                               </td>
                             </tr>
@@ -936,7 +1124,7 @@ export default function AdminDashboardPage() {
                     </table>
                   </div>
 
-                  {/* Pagination controller bar */}
+                  {/* Pagination bar */}
                   {totalPages > 1 && (
                     <div className="border-t border-brand-navy/5 bg-brand-cream/5 px-6 py-4 flex justify-between items-center text-xs">
                       <span className="text-brand-muted font-medium">
@@ -965,7 +1153,7 @@ export default function AdminDashboardPage() {
               </motion.div>
             )}
 
-            {/* TAB C: NOTIFICATIONS LOG PANEL */}
+            {/* PANEL C: NOTIFICATIONS SENT LOG */}
             {activeTab === "notifications" && (
               <motion.div
                 key="notifications-tab"
@@ -975,12 +1163,12 @@ export default function AdminDashboardPage() {
                 className="space-y-6 text-left"
               >
                 <div>
-                  <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-brand-navy">
-                    Sent Notifications Log
-                  </h1>
-                  <p className="text-xs text-brand-muted font-light mt-1 uppercase tracking-wider">
-                    Log registry of counseling notification messages dispatched to students
-                  </p>
+                  <h3 className="font-heading text-sm font-bold text-brand-navy uppercase tracking-wider">
+                    Dispatched alerts logs
+                  </h3>
+                  <span className="text-[10px] text-brand-muted font-light mt-0.5 block">
+                    Full registry listing of counseling notifications sent to students
+                  </span>
                 </div>
 
                 <div className="bg-white rounded-3xl border border-brand-navy/10 shadow-sm overflow-hidden min-h-[420px]">
@@ -991,8 +1179,8 @@ export default function AdminDashboardPage() {
                           <th className="px-6 py-4">Student</th>
                           <th className="px-6 py-4">Phone</th>
                           <th className="px-6 py-4">Notification Title</th>
-                          <th className="px-6 py-4">Message Body</th>
-                          <th className="px-6 py-4">Dispatch Time</th>
+                          <th className="px-6 py-4">Alert Message Body</th>
+                          <th className="px-6 py-4">Dispatch Date</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-brand-navy/5 text-xs sm:text-sm">
@@ -1000,7 +1188,7 @@ export default function AdminDashboardPage() {
                           <tr>
                             <td colSpan={5} className="py-24 text-center text-brand-muted font-light">
                               <Inbox className="w-12 h-12 stroke-1 text-brand-navy/20 mx-auto mb-2" />
-                              <p>No notices dispatched yet.</p>
+                              <p>No counseling alerts dispatched yet.</p>
                             </td>
                           </tr>
                         ) : (
@@ -1036,9 +1224,91 @@ export default function AdminDashboardPage() {
               </motion.div>
             )}
 
+            {/* PANEL D: PORTAL SETTINGS */}
+            {activeTab === "settings" && (
+              <motion.div
+                key="settings-tab"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="max-w-2xl text-left space-y-6"
+              >
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-brand-navy uppercase tracking-wider">
+                    Institution Portal Settings
+                  </h3>
+                  <span className="text-[10px] text-brand-muted font-light block">
+                    Manage dashboard info and system defaults
+                  </span>
+                </div>
+
+                <form onSubmit={handleSaveSettings} className="bg-white p-6 rounded-3xl border border-brand-navy/10 shadow-sm space-y-5">
+                  {settingsSuccess && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-150 text-emerald-600 rounded-xl text-xs font-semibold flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      <span>Settings updated successfully!</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-brand-navy">
+                      Institution Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={instName}
+                      onChange={(e) => setInstName(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-brand-navy">
+                      Admissions Desk Phone
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={instPhone}
+                      onChange={(e) => setInstPhone(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-brand-navy">
+                      Main Centre Address
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={instAddress}
+                      onChange={(e) => setInstAddress(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5 resize-none"
+                    />
+                  </div>
+
+                  <div className="pt-2 border-t border-brand-navy/5 flex justify-end">
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 bg-brand-navy hover:bg-brand-gold text-white hover:text-brand-navy font-bold rounded-xl text-xs uppercase tracking-wide transition-colors cursor-pointer"
+                    >
+                      Save Settings
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
           </AnimatePresence>
-        )}
-      </main>
+        </div>
+
+      </div>
+
+      {/* ==========================================
+          MODALS OVERLAYS
+          ========================================== */}
 
       {/* MODAL 1: VIEW DETAILS MODAL */}
       <AnimatePresence>
@@ -1048,11 +1318,12 @@ export default function AdminDashboardPage() {
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="w-full max-w-md bg-white rounded-3xl border border-brand-navy/10 shadow-2xl overflow-hidden text-left"
+              className="w-full max-w-md bg-white rounded-3xl border border-brand-navy/10 shadow-2xl overflow-hidden text-left relative"
             >
               <div className="bg-brand-navy text-white px-6 py-4 flex justify-between items-center">
-                <h3 className="font-heading font-bold text-sm tracking-wider uppercase">
-                  Student Profile Sheet
+                <h3 className="font-heading font-bold text-sm tracking-wider uppercase flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-brand-gold" />
+                  <span>Student Profile Details</span>
                 </h3>
                 <button
                   onClick={() => setViewingEnquiry(null)}
@@ -1085,7 +1356,7 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-2 gap-4 border-b border-brand-navy/5 pb-4">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-brand-gold tracking-wider block">
-                      Class Studying
+                      Class / Grade
                     </span>
                     <span className="font-semibold text-brand-charcoal block mt-1">
                       {viewingEnquiry.class}
@@ -1093,7 +1364,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-brand-gold tracking-wider block">
-                      Education Board
+                      Board
                     </span>
                     <span className="font-semibold text-brand-charcoal block mt-1">
                       {viewingEnquiry.board}
@@ -1143,8 +1414,11 @@ export default function AdminDashboardPage() {
 
                 <div className="pt-4 border-t border-brand-navy/5 flex justify-end gap-2">
                   <button
-                    onClick={() => handleCallStudent(viewingEnquiry.phone)}
-                    className="px-4 py-2 bg-brand-navy hover:bg-brand-gold text-white hover:text-brand-navy font-bold rounded-xl text-xs uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1"
+                    onClick={() => {
+                      handleCallStudent(viewingEnquiry.phone);
+                      setViewingEnquiry(null);
+                    }}
+                    className="px-4 py-2 bg-brand-navy hover:bg-brand-gold text-white hover:text-brand-navy font-bold rounded-xl text-xs uppercase tracking-wide transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <Phone className="w-3.5 h-3.5" />
                     <span>Call Student</span>
@@ -1153,7 +1427,7 @@ export default function AdminDashboardPage() {
                     onClick={() => setViewingEnquiry(null)}
                     className="px-4 py-2 border border-brand-navy/10 text-brand-navy hover:bg-brand-cream/20 font-bold rounded-xl text-xs uppercase tracking-wide transition-all cursor-pointer"
                   >
-                    Close Sheet
+                    Close
                   </button>
                 </div>
               </div>
@@ -1359,9 +1633,10 @@ export default function AdminDashboardPage() {
                       <button
                         type="submit"
                         disabled={notifLoading}
-                        className="px-6 py-2.5 bg-brand-navy text-white hover:bg-brand-gold hover:text-brand-navy font-bold rounded-xl text-xs uppercase tracking-wide cursor-pointer disabled:opacity-50"
+                        className="px-6 py-2.5 bg-brand-navy text-white hover:bg-brand-gold hover:text-brand-navy font-bold rounded-xl text-xs uppercase tracking-wide cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                       >
-                        {notifLoading ? "Sending..." : "Send Notice"}
+                        <Check className="w-4 h-4" />
+                        <span>Send Notice</span>
                       </button>
                     </div>
                   </>
@@ -1412,7 +1687,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {copiedNumber && (
-                <span className="text-[10px] font-semibold text-emerald-600 mt-2 block">
+                <span className="text-[10px] font-semibold text-emerald-600 mt-2 block animate-pulse">
                   Number copied to clipboard!
                 </span>
               )}
