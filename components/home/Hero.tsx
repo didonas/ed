@@ -113,9 +113,9 @@ export default function Hero() {
             ].map((feature, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3.5 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 hover:border-brand-gold/20 transition-all duration-300 group h-full shadow-sm"
+                className="flex items-center gap-3.5 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 h-full shadow-sm"
               >
-                <div className="p-2 rounded-md bg-white/5 text-brand-gold group-hover:bg-brand-gold group-hover:text-brand-navy transition-all duration-300">
+                <div className="p-2 rounded-md bg-white/5 text-brand-gold">
                   {feature.icon}
                 </div>
                 <div>
