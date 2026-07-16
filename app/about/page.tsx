@@ -94,7 +94,7 @@ export default function AboutPage() {
                 and replace it with deep conceptual understanding. Over the last decade, we have grown 
                 from a small coaching tutorial to a premium institute of repute.
               </p>
-              <p className="text-brand-charcoal/70 font-light text-sm leading-relaxed">
+              <p className="text-brand-charcoal/80 font-light leading-relaxed">
                 Our founders noticed that while students spent hours studying, they struggled to solve problems 
                 requiring application of knowledge. By hiring dedicated researchers and CA/IIT level educators, 
                 we structured a curriculum that starts with standard school boards and scales smoothly to 

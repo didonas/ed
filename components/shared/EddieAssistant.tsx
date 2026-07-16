@@ -48,6 +48,7 @@ export default function EddieAssistant() {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
   const assistantRef = useRef<HTMLDivElement>(null);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   // Load session dismissal and check for existing onboarding profile from storage and database
   useEffect(() => {
@@ -58,6 +59,8 @@ export default function EddieAssistant() {
 
     async function checkProfile() {
       const enquiryId = getEnquiryId();
+      let profileLoaded = false;
+
       if (enquiryId) {
         // Fetch latest profile from Supabase to keep in sync
         const dbProfile = await fetchEnquiryById(enquiryId);
@@ -68,6 +71,7 @@ export default function EddieAssistant() {
           setBoard(dbProfile.board);
           setInterest(dbProfile.interested_course);
           setHasProfile(true);
+          profileLoaded = true;
           
           // Update local storage backup
           await saveOnboardingProfile({
@@ -87,6 +91,7 @@ export default function EddieAssistant() {
             setBoard(localProfile.board);
             setInterest(localProfile.interest);
             setHasProfile(true);
+            profileLoaded = true;
           }
         }
       } else {
@@ -98,6 +103,7 @@ export default function EddieAssistant() {
           setClassStudying(localProfile.classStudying);
           setBoard(localProfile.board);
           setInterest(localProfile.interest);
+          profileLoaded = true;
           
           const dbData = await submitSupabaseEnquiry({
             name: localProfile.name,
@@ -111,6 +117,14 @@ export default function EddieAssistant() {
             setHasProfile(true);
           }
         }
+      }
+
+      // Check if welcome popup should be shown (first visit after 2 seconds)
+      const popupShown = localStorage.getItem("eddie_popup_shown");
+      if (!popupShown && !profileLoaded) {
+        setTimeout(() => {
+          setShowWelcomePopup(true);
+        }, 2000);
       }
     }
     checkProfile();
@@ -329,7 +343,7 @@ export default function EddieAssistant() {
           return {
             pose: "/images/eddy/waving.png",
             msg: hasProfile
-              ? `👋 Welcome back, ${name}! Ready to explore courses?`
+              ? `Welcome back, ${name} 👋`
               : "👋 Welcome! I'm Eddie. Let me help you explore our institution.",
           };
       }
@@ -366,7 +380,7 @@ export default function EddieAssistant() {
           default:
             return {
               pose: "/images/eddy/waving.png",
-              msg: `👋 Hi, ${name}! What would you like to explore today?`,
+              msg: `Welcome back, ${name} 👋`,
             };
         }
       case "welcome":
@@ -425,10 +439,61 @@ export default function EddieAssistant() {
   };
 
   return (
-    <div
-      ref={assistantRef}
-      className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-3 pointer-events-auto"
-    >
+    <>
+      {/* 2. Welcome First Visit Modal Popup */}
+      <AnimatePresence>
+        {showWelcomePopup && (
+          <div className="fixed inset-0 bg-brand-navy/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white rounded-3xl border border-brand-navy/10 shadow-2xl p-6 md:p-8 space-y-6 text-center text-brand-charcoal"
+            >
+              <div className="text-center space-y-3">
+                <span className="text-[10px] uppercase font-bold text-brand-gold tracking-widest">
+                  Welcome Guide
+                </span>
+                <h2 className="font-heading text-xl md:text-2xl font-extrabold text-brand-navy leading-tight">
+                  👋 Welcome to Edison’s Knowledge Hub
+                </h2>
+                <div className="h-0.5 w-12 bg-brand-gold mx-auto rounded-full" />
+              </div>
+              
+              <p className="text-sm font-light text-brand-charcoal/90 leading-relaxed">
+                Meet Eddie, your learning companion! Click on Eddie at the bottom-left corner and answer a few simple questions so we can recommend the perfect course for you.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    localStorage.setItem("eddie_popup_shown", "true");
+                    setShowWelcomePopup(false);
+                    setCurrentStep("welcome"); // Automatically open Eddie onboarding
+                  }}
+                  className="flex-grow py-3 bg-brand-navy hover:bg-brand-navy/90 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Meet Eddie
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem("eddie_popup_shown", "true");
+                    setShowWelcomePopup(false);
+                  }}
+                  className="flex-grow py-3 bg-transparent border border-brand-navy/10 text-brand-navy hover:bg-brand-cream/35 font-medium rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div
+        ref={assistantRef}
+        className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-3 pointer-events-auto"
+      >
       {/* 1. Onboarding Wizard & Menu Speech Modal */}
       <AnimatePresence>
         {currentStep !== "minimized" && (
@@ -855,7 +920,7 @@ export default function EddieAssistant() {
                               type="text"
                               value={otherClass}
                               onChange={(e) => setOtherClass(e.target.value)}
-                              placeholder="Enter your class"
+                              placeholder="Please specify..."
                               className="w-full px-4 py-3 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
                               autoFocus
                             />
@@ -924,7 +989,7 @@ export default function EddieAssistant() {
                               type="text"
                               value={otherBoard}
                               onChange={(e) => setOtherBoard(e.target.value)}
-                              placeholder="Enter your board"
+                              placeholder="Please specify..."
                               className="w-full px-4 py-3 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
                               autoFocus
                             />
@@ -1003,7 +1068,7 @@ export default function EddieAssistant() {
                               type="text"
                               value={otherInterest}
                               onChange={(e) => setOtherInterest(e.target.value)}
-                              placeholder="Enter your course"
+                              placeholder="Please specify..."
                               className="w-full px-4 py-3 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
                               autoFocus
                             />
@@ -1114,5 +1179,6 @@ export default function EddieAssistant() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

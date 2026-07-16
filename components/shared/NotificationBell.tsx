@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, BellRing, Inbox, X, Calendar } from "lucide-react";
+import { Bell, BellRing, Inbox, X, Calendar, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getEnquiryId } from "@/services/onboardingService";
-import { fetchNotificationsForVisitor, markNotificationsAsRead, Notification } from "@/services/supabaseService";
+import {
+  fetchNotificationsForVisitor,
+  markSingleNotificationRead,
+  markNotificationsAsRead,
+  Notification,
+} from "@/services/supabaseService";
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -51,20 +56,30 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // Handle open panel: mark notifications as read
-  const handleToggle = async () => {
-    const nextState = !isOpen;
-    setIsOpen(nextState);
-    
-    if (nextState && enquiryId && unreadCount > 0) {
-      // Mark read in DB
+  // Handle open panel (no longer auto-marks all read)
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  // Mark single notification as read
+  const handleMarkSingleRead = async (id: string) => {
+    const success = await markSingleNotificationRead(id);
+    if (success) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+  };
+
+  // Mark all notifications as read helper
+  const handleMarkAllRead = async () => {
+    if (enquiryId && unreadCount > 0) {
       await markNotificationsAsRead(enquiryId);
-      setUnreadCount(0);
-      
-      // Update local state is_read status to true
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, is_read: true }))
       );
+      setUnreadCount(0);
     }
   };
 
@@ -131,12 +146,22 @@ export default function NotificationBell() {
                 <Bell className="w-4 h-4 text-brand-gold" />
                 <span>STUDENT NOTIFICATIONS</span>
               </span>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-white/60 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="text-[10px] uppercase font-bold text-brand-gold hover:text-white transition-colors cursor-pointer px-2 py-0.5 border border-brand-gold/20 rounded"
+                  >
+                    Mark All Read
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* List */}
@@ -151,21 +176,30 @@ export default function NotificationBell() {
                   <div
                     key={item.id}
                     className={`p-4 transition-colors text-left relative ${
-                      !item.is_read ? "bg-brand-gold/5 font-semibold" : "bg-white"
+                      !item.is_read ? "bg-blue-50/70 font-semibold border-l-4 border-brand-navy" : "bg-white"
                     }`}
                   >
-                    {!item.is_read && (
-                      <span className="absolute top-4.5 right-4 w-2 h-2 rounded-full bg-brand-orange" />
-                    )}
                     <h4 className="text-xs sm:text-sm font-bold text-brand-navy pr-4 leading-tight">
                       {item.title}
                     </h4>
                     <p className="text-xs text-brand-charcoal/80 font-light mt-1.5 leading-relaxed whitespace-pre-line">
                       {item.message}
                     </p>
-                    <div className="flex items-center gap-1 mt-3 text-[10px] text-brand-muted/80 font-medium">
-                      <Calendar className="w-3 h-3 text-brand-orange" />
-                      <span>{formatDate(item.created_at)}</span>
+                    <div className="flex justify-between items-center mt-3">
+                      <div className="flex items-center gap-1 text-[10px] text-brand-muted/80 font-medium">
+                        <Calendar className="w-3 h-3 text-brand-orange" />
+                        <span>{formatDate(item.created_at)}</span>
+                      </div>
+                      
+                      {!item.is_read && (
+                        <button
+                          onClick={() => handleMarkSingleRead(item.id)}
+                          className="px-2 py-1 bg-brand-navy hover:bg-brand-gold text-white hover:text-brand-navy text-[10px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>Mark as Read</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))

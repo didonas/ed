@@ -141,6 +141,27 @@ export async function markNotificationsAsRead(enquiryId: string): Promise<void> 
   }
 }
 
+/**
+ * Marks a single notification as read by its unique ID.
+ */
+export async function markSingleNotificationRead(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error marking single notification read:", error.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Supabase markSingleNotificationRead exception:", error);
+    return false;
+  }
+}
+
 // ==========================================
 // 2. ADMIN SECURE DASHBOARD DATA ACCESS
 // ==========================================
