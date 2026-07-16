@@ -58,3 +58,21 @@ export async function clearOnboardingProfile(): Promise<boolean> {
     return false;
   }
 }
+
+const ENQUIRY_ID_KEY = "eddie_enquiry_id";
+
+export function getEnquiryId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ENQUIRY_ID_KEY);
+}
+
+export function saveEnquiryId(id: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(ENQUIRY_ID_KEY, id);
+}
+
+export function clearEnquiryId(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ENQUIRY_ID_KEY);
+}
+

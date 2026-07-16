@@ -7,6 +7,7 @@ import { Menu, X, ArrowRight, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Button from "../ui/Button";
+import NotificationBell from "../shared/NotificationBell";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -93,7 +94,8 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Call to Action */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-5">
+            <NotificationBell />
             <a
               href="tel:+919876543210"
               className="flex items-center gap-1.5 text-sm text-white/80 hover:text-brand-gold transition-colors font-medium"
@@ -108,6 +110,7 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <div className="lg:hidden flex items-center gap-3">
+            <NotificationBell />
             <a
               href="tel:+919876543210"
               className="p-2 text-white/90 hover:text-brand-gold transition-colors"

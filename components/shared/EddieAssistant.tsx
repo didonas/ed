@@ -9,8 +9,16 @@ import {
   getOnboardingProfile,
   saveOnboardingProfile,
   clearOnboardingProfile,
+  getEnquiryId,
+  saveEnquiryId,
+  clearEnquiryId,
   OnboardingProfile,
 } from "@/services/onboardingService";
+import {
+  submitSupabaseEnquiry,
+  updateSupabaseEnquiry,
+  fetchEnquiryById,
+} from "@/services/supabaseService";
 
 type OnboardingStep = "welcome" | "menu" | 1 | 2 | 3 | 4 | 5 | "complete" | "minimized";
 
@@ -26,13 +34,22 @@ export default function EddieAssistant() {
   const [board, setBoard] = useState("");
   const [interest, setInterest] = useState("");
 
+  // "Other" Option custom sub-mode inputs
+  const [isClassOther, setIsClassOther] = useState(false);
+  const [isBoardOther, setIsBoardOther] = useState(false);
+  const [isInterestOther, setIsInterestOther] = useState(false);
+  
+  const [otherClass, setOtherClass] = useState("");
+  const [otherBoard, setOtherBoard] = useState("");
+  const [otherInterest, setOtherInterest] = useState("");
+
   const [hasProfile, setHasProfile] = useState(false);
   const [errors, setErrors] = useState<string>("");
   const [isDismissed, setIsDismissed] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
   const assistantRef = useRef<HTMLDivElement>(null);
 
-  // Load session dismissal and check for existing onboarding profile from storage
+  // Load session dismissal and check for existing onboarding profile from storage and database
   useEffect(() => {
     const dismissed = sessionStorage.getItem("eddie_dismissed");
     if (dismissed === "true") {
@@ -40,14 +57,60 @@ export default function EddieAssistant() {
     }
 
     async function checkProfile() {
-      const profile = await getOnboardingProfile();
-      if (profile) {
-        setName(profile.name);
-        setPhone(profile.phone);
-        setClassStudying(profile.classStudying);
-        setBoard(profile.board);
-        setInterest(profile.interest);
-        setHasProfile(true);
+      const enquiryId = getEnquiryId();
+      if (enquiryId) {
+        // Fetch latest profile from Supabase to keep in sync
+        const dbProfile = await fetchEnquiryById(enquiryId);
+        if (dbProfile) {
+          setName(dbProfile.name);
+          setPhone(dbProfile.phone);
+          setClassStudying(dbProfile.class);
+          setBoard(dbProfile.board);
+          setInterest(dbProfile.interested_course);
+          setHasProfile(true);
+          
+          // Update local storage backup
+          await saveOnboardingProfile({
+            name: dbProfile.name,
+            phone: dbProfile.phone,
+            classStudying: dbProfile.class,
+            board: dbProfile.board,
+            interest: dbProfile.interested_course,
+          });
+        } else {
+          // Fallback to local storage if server is unreachable
+          const localProfile = await getOnboardingProfile();
+          if (localProfile) {
+            setName(localProfile.name);
+            setPhone(localProfile.phone);
+            setClassStudying(localProfile.classStudying);
+            setBoard(localProfile.board);
+            setInterest(localProfile.interest);
+            setHasProfile(true);
+          }
+        }
+      } else {
+        // Check if an offline local profile exists, and sync it to DB
+        const localProfile = await getOnboardingProfile();
+        if (localProfile) {
+          setName(localProfile.name);
+          setPhone(localProfile.phone);
+          setClassStudying(localProfile.classStudying);
+          setBoard(localProfile.board);
+          setInterest(localProfile.interest);
+          
+          const dbData = await submitSupabaseEnquiry({
+            name: localProfile.name,
+            phone: localProfile.phone,
+            classStudying: localProfile.classStudying,
+            board: localProfile.board,
+            interest: localProfile.interest,
+          });
+          if (dbData) {
+            saveEnquiryId(dbData.id);
+            setHasProfile(true);
+          }
+        }
       }
     }
     checkProfile();
@@ -110,19 +173,32 @@ export default function EddieAssistant() {
   };
 
   const handleSelectClass = (val: string) => {
-    setClassStudying(val);
-    setCurrentStep(4);
+    if (val === "Other") {
+      setIsClassOther(true);
+    } else {
+      setClassStudying(val);
+      setCurrentStep(4);
+    }
   };
 
   const handleSelectBoard = (val: string) => {
-    setBoard(val);
-    setCurrentStep(5);
+    if (val === "Other") {
+      setIsBoardOther(true);
+    } else {
+      setBoard(val);
+      setCurrentStep(5);
+    }
   };
 
   const handleSelectInterest = async (val: string) => {
+    if (val === "Other") {
+      setIsInterestOther(true);
+      return;
+    }
+
     setInterest(val);
     
-    // Construct profile and save it to storage
+    // Construct profile and save it to storage and Supabase
     const profile: OnboardingProfile = {
       name,
       phone,
@@ -131,10 +207,25 @@ export default function EddieAssistant() {
       interest: val,
     };
     
-    const success = await saveOnboardingProfile(profile);
-    if (success) {
-      setHasProfile(true);
+    // Save to localStorage
+    await saveOnboardingProfile(profile);
+    
+    const enquiryId = getEnquiryId();
+    if (enquiryId) {
+      // Update record in Supabase
+      const success = await updateSupabaseEnquiry(enquiryId, profile);
+      if (success) {
+        setHasProfile(true);
+      }
+    } else {
+      // Insert new record in Supabase
+      const dbData = await submitSupabaseEnquiry(profile);
+      if (dbData) {
+        saveEnquiryId(dbData.id);
+        setHasProfile(true);
+      }
     }
+    
     setCurrentStep("complete");
   };
 
@@ -147,22 +238,34 @@ export default function EddieAssistant() {
       board: board || "Not Specified",
       interest: interest || "Exploring",
     };
+    
     await saveOnboardingProfile(profile);
-    setHasProfile(true);
+    
+    const enquiryId = getEnquiryId();
+    if (enquiryId) {
+      const success = await updateSupabaseEnquiry(enquiryId, profile);
+      if (success) setHasProfile(true);
+    } else {
+      const dbData = await submitSupabaseEnquiry(profile);
+      if (dbData) {
+        saveEnquiryId(dbData.id);
+        setHasProfile(true);
+      }
+    }
+    
     setCurrentStep("complete");
   };
 
-  // Reset details / Clear profile
-  const handleResetProfile = async () => {
-    await clearOnboardingProfile();
-    setName("");
-    setPhone("");
-    setClassStudying("");
-    setBoard("");
-    setInterest("");
-    setHasProfile(false);
+  // Reopen the onboarding form pre-filled with existing data
+  const handleUpdateDetails = () => {
+    setIsClassOther(false);
+    setIsBoardOther(false);
+    setIsInterestOther(false);
+    setOtherClass("");
+    setOtherBoard("");
+    setOtherInterest("");
     setErrors("");
-    setCurrentStep("welcome");
+    setCurrentStep(1); // Return to Step 1 (Name)
   };
 
   // Trigger custom dispatch events or path changes based on context buttons
@@ -234,7 +337,6 @@ export default function EddieAssistant() {
 
     switch (currentStep) {
       case "menu":
-        // Context-aware menu configurations
         switch (pathname) {
           case "/courses":
             return {
@@ -285,17 +387,17 @@ export default function EddieAssistant() {
       case 3:
         return {
           pose: "/images/eddy/sitting.png",
-          msg: "Which class are you studying in?",
+          msg: isClassOther ? "Enter your class" : "Which class are you studying in?",
         };
       case 4:
         return {
           pose: "/images/eddy/reading_book.png",
-          msg: "Which board do you follow?",
+          msg: isBoardOther ? "Enter your board" : "Which board do you follow?",
         };
       case 5:
         return {
           pose: "/images/eddy/pointing_right.png",
-          msg: "What are you interested in?",
+          msg: isInterestOther ? "Enter your course" : "What are you interested in?",
         };
       case "complete":
         return {
@@ -343,9 +445,17 @@ export default function EddieAssistant() {
                 {/* Back Button */}
                 {typeof currentStep === "number" ? (
                   <button
-                    onClick={() =>
-                      setCurrentStep(currentStep === 1 ? "welcome" : ((currentStep - 1) as OnboardingStep))
-                    }
+                    onClick={() => {
+                      if (currentStep === 3 && isClassOther) {
+                        setIsClassOther(false);
+                      } else if (currentStep === 4 && isBoardOther) {
+                        setIsBoardOther(false);
+                      } else if (currentStep === 5 && isInterestOther) {
+                        setIsInterestOther(false);
+                      } else {
+                        setCurrentStep(currentStep === 1 ? "welcome" : ((currentStep - 1) as OnboardingStep));
+                      }
+                    }}
                     className="flex items-center gap-1 hover:text-brand-navy transition-colors cursor-pointer"
                   >
                     <ArrowLeft className="w-4.5 h-4.5 text-brand-orange" />
@@ -415,7 +525,7 @@ export default function EddieAssistant() {
 
               <div className="text-left flex-grow">
                 <h4 className="font-heading text-sm font-semibold text-brand-navy">Eddie Says:</h4>
-                <p className="text-xs md:text-sm font-light text-brand-charcoal leading-relaxed mt-0.5">
+                <p className="text-xs md:text-sm font-light text-brand-charcoal leading-relaxed mt-0.5 animate-pulse">
                   {stepConfig.msg}
                 </p>
               </div>
@@ -439,7 +549,7 @@ export default function EddieAssistant() {
                     className="space-y-4"
                   >
                     <p className="text-sm font-light leading-relaxed text-brand-charcoal">
-                      Welcome to <strong>Edison's Knowledge Hub</strong>. I'll ask just a few quick questions to help you explore the right course stream.
+                      Welcome to <strong>EDISON'S KNOWLEDGE HUB</strong>. I'll ask just a few quick questions to help you explore the right course stream.
                     </p>
                     <button
                       onClick={() => setCurrentStep(1)}
@@ -475,7 +585,7 @@ export default function EddieAssistant() {
                           onClick={() => dispatchAction("eddie-courses-filter", "science")}
                           className="w-full py-2.5 px-4 bg-brand-cream/20 hover:bg-brand-cream/50 border border-brand-navy/5 hover:border-brand-gold rounded-xl text-left text-xs sm:text-sm font-semibold text-brand-navy transition-all cursor-pointer flex items-center gap-2.5 shadow-sm"
                         >
-                          <Award className="w-4 h-4 text-brand-gold animate-bounce" />
+                          <Award className="w-4 h-4 text-brand-gold" />
                           <span>🔥 Most Popular Course (Science Integrated)</span>
                         </button>
                         <button
@@ -628,7 +738,7 @@ export default function EddieAssistant() {
                       </a>
                       
                       <button
-                        onClick={handleResetProfile}
+                        onClick={handleUpdateDetails}
                         className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-orange hover:text-brand-navy transition-colors cursor-pointer"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
@@ -703,79 +813,226 @@ export default function EddieAssistant() {
                 )}
 
                 {currentStep === 3 && (
-                  <motion.div
-                    key="step3"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="grid grid-cols-2 gap-2"
-                  >
-                    {[
-                      "Classes 1–5",
-                      "Classes 6–8",
-                      "Classes 9–10",
-                      "Classes 11–12",
-                      "College",
-                      "Other",
-                    ].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => handleSelectClass(val)}
-                        className="py-3 border border-brand-navy/15 hover:border-brand-gold bg-white hover:bg-brand-cream/15 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer text-brand-navy text-center"
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </motion.div>
+                  <div className="relative">
+                    <AnimatePresence mode="wait">
+                      {!isClassOther ? (
+                        <motion.div
+                          key="class-grid"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="grid grid-cols-2 gap-2"
+                        >
+                          {[
+                            "Classes 1–5",
+                            "Classes 6–8",
+                            "Classes 9–10",
+                            "Classes 11–12",
+                            "College",
+                            "Other",
+                          ].map((val) => (
+                            <button
+                              key={val}
+                              onClick={() => handleSelectClass(val)}
+                              className="py-3 border border-brand-navy/15 hover:border-brand-gold bg-white hover:bg-brand-cream/15 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer text-brand-navy text-center"
+                            >
+                              {val}
+                            </button>
+                          ))}
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="class-other"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="space-y-4"
+                        >
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold uppercase tracking-wider text-brand-navy">
+                              Custom Class
+                            </label>
+                            <input
+                              type="text"
+                              value={otherClass}
+                              onChange={(e) => setOtherClass(e.target.value)}
+                              placeholder="Enter your class"
+                              className="w-full px-4 py-3 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setIsClassOther(false);
+                                setOtherClass("");
+                              }}
+                              className="w-1/3 py-2.5 border border-brand-navy/10 text-brand-navy hover:bg-brand-cream/30 hover:border-brand-gold font-medium rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer text-center"
+                            >
+                              Back
+                            </button>
+                            <button
+                              disabled={!otherClass.trim()}
+                              onClick={() => {
+                                setClassStudying(otherClass.trim());
+                                setIsClassOther(false);
+                                setCurrentStep(4);
+                              }}
+                              className="w-2/3 py-2.5 bg-brand-navy text-white disabled:opacity-50 hover:bg-brand-gold hover:text-brand-navy font-semibold rounded-xl transition-colors text-sm cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              Continue
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
 
                 {currentStep === 4 && (
-                  <motion.div
-                    key="step4"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="grid grid-cols-2 gap-2"
-                  >
-                    {["CBSE", "State Board", "ICSE", "IGCSE", "Other"].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => handleSelectBoard(val)}
-                        className="py-3 border border-brand-navy/15 hover:border-brand-gold bg-white hover:bg-brand-cream/15 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer text-brand-navy text-center"
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </motion.div>
+                  <div className="relative">
+                    <AnimatePresence mode="wait">
+                      {!isBoardOther ? (
+                        <motion.div
+                          key="board-grid"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="grid grid-cols-2 gap-2"
+                        >
+                          {["CBSE", "State Board", "ICSE", "IGCSE", "Other"].map((val) => (
+                            <button
+                              key={val}
+                              onClick={() => handleSelectBoard(val)}
+                              className="py-3 border border-brand-navy/15 hover:border-brand-gold bg-white hover:bg-brand-cream/15 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer text-brand-navy text-center"
+                            >
+                              {val}
+                            </button>
+                          ))}
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="board-other"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="space-y-4"
+                        >
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold uppercase tracking-wider text-brand-navy">
+                              Custom Board
+                            </label>
+                            <input
+                              type="text"
+                              value={otherBoard}
+                              onChange={(e) => setOtherBoard(e.target.value)}
+                              placeholder="Enter your board"
+                              className="w-full px-4 py-3 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setIsBoardOther(false);
+                                setOtherBoard("");
+                              }}
+                              className="w-1/3 py-2.5 border border-brand-navy/10 text-brand-navy hover:bg-brand-cream/30 hover:border-brand-gold font-medium rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer text-center"
+                            >
+                              Back
+                            </button>
+                            <button
+                              disabled={!otherBoard.trim()}
+                              onClick={() => {
+                                setBoard(otherBoard.trim());
+                                setIsBoardOther(false);
+                                setCurrentStep(5);
+                              }}
+                              className="w-2/3 py-2.5 bg-brand-navy text-white disabled:opacity-50 hover:bg-brand-gold hover:text-brand-navy font-semibold rounded-xl transition-colors text-sm cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              Continue
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
 
                 {currentStep === 5 && (
-                  <motion.div
-                    key="step5"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="grid grid-cols-2 gap-2"
-                  >
-                    {[
-                      "School Tuition",
-                      "NEET",
-                      "JEE",
-                      "Computer Courses",
-                      "Spoken English",
-                      "Olympiad",
-                      "Career Guidance",
-                      "Just Exploring",
-                    ].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => handleSelectInterest(val)}
-                        className="py-2.5 border border-brand-navy/15 hover:border-brand-gold bg-white hover:bg-brand-cream/15 text-xs font-semibold rounded-xl transition-all cursor-pointer text-brand-navy text-center"
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </motion.div>
+                  <div className="relative">
+                    <AnimatePresence mode="wait">
+                      {!isInterestOther ? (
+                        <motion.div
+                          key="interest-grid"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="grid grid-cols-2 gap-2"
+                        >
+                          {[
+                            "School Tuition",
+                            "NEET",
+                            "JEE",
+                            "Computer Courses",
+                            "Spoken English",
+                            "Olympiad",
+                            "Career Guidance",
+                            "Just Exploring",
+                            "Other",
+                          ].map((val) => (
+                            <button
+                              key={val}
+                              onClick={() => handleSelectInterest(val)}
+                              className="py-2.5 border border-brand-navy/15 hover:border-brand-gold bg-white hover:bg-brand-cream/15 text-xs font-semibold rounded-xl transition-all cursor-pointer text-brand-navy text-center"
+                            >
+                              {val}
+                            </button>
+                          ))}
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="interest-other"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="space-y-4"
+                        >
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold uppercase tracking-wider text-brand-navy">
+                              Custom Course / Interest
+                            </label>
+                            <input
+                              type="text"
+                              value={otherInterest}
+                              onChange={(e) => setOtherInterest(e.target.value)}
+                              placeholder="Enter your course"
+                              className="w-full px-4 py-3 border border-brand-navy/15 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-gold bg-brand-cream/5"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setIsInterestOther(false);
+                                setOtherInterest("");
+                              }}
+                              className="w-1/3 py-2.5 border border-brand-navy/10 text-brand-navy hover:bg-brand-cream/30 hover:border-brand-gold font-medium rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer text-center"
+                            >
+                              Back
+                            </button>
+                            <button
+                              disabled={!otherInterest.trim()}
+                              onClick={() => {
+                                handleSelectInterest(otherInterest.trim());
+                                setIsInterestOther(false);
+                              }}
+                              className="w-2/3 py-2.5 bg-brand-navy text-white disabled:opacity-50 hover:bg-brand-gold hover:text-brand-navy font-semibold rounded-xl transition-colors text-sm cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              Continue
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
 
                 {currentStep === "complete" && (
