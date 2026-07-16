@@ -51,14 +51,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo / Brand Name */}
-          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
-            <div className="w-9 h-9 rounded-full border border-brand-gold bg-brand-navy flex items-center justify-center overflow-hidden shrink-0 relative transition-transform duration-300 group-hover:scale-105">
+          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
+            <div className="w-12 h-10 relative shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Image
-                src="/images/eddy/avatar_head.png"
-                alt="Edison Logo"
+                src="/images/logo.png"
+                alt="Edison's Knowledge Hub Logo"
                 fill
-                sizes="36px"
+                sizes="48px"
                 className="object-contain"
+                priority
               />
             </div>
             <span className="font-heading font-extrabold text-lg md:text-xl tracking-wider text-white flex items-center gap-1">

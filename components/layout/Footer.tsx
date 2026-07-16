@@ -19,12 +19,12 @@ export default function Footer() {
           {/* Institution Column */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full border border-brand-gold bg-brand-navy flex items-center justify-center overflow-hidden shrink-0 relative">
+              <div className="w-10 h-8 relative shrink-0">
                 <Image
-                  src="/images/eddy/avatar_head.png"
-                  alt="Edison Logo"
+                  src="/images/logo.png"
+                  alt="Edison's Knowledge Hub Logo"
                   fill
-                  sizes="32px"
+                  sizes="40px"
                   className="object-contain"
                 />
               </div>
