@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MapPin,
   Phone,
@@ -17,9 +18,20 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Institution Column */}
           <div className="space-y-4">
-            <h3 className="font-heading font-extrabold text-xl md:text-2xl tracking-wider text-white">
-              Edison<span className="text-brand-gold font-normal"> ACADEMY</span>
-            </h3>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full border border-brand-gold bg-brand-navy flex items-center justify-center overflow-hidden shrink-0 relative">
+                <Image
+                  src="/images/eddy/avatar_head.png"
+                  alt="Edison Logo"
+                  fill
+                  sizes="32px"
+                  className="object-contain"
+                />
+              </div>
+              <h3 className="font-heading font-extrabold text-lg md:text-xl tracking-wider text-white">
+                EDISON'S <span className="text-brand-gold font-light">KNOWLEDGE HUB</span>
+              </h3>
+            </div>
             <p className="text-brand-cream/70 text-sm font-light leading-relaxed">
               Edison's Knowledge Hub is dedicated to providing students with premium education, 
               innovative courses, and mentorship that shapes the leaders of tomorrow. 

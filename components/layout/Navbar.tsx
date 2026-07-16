@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowRight, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import Button from "../ui/Button";
 
 export default function Navbar() {
@@ -50,10 +51,18 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo / Brand Name */}
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-            <span className="font-heading font-extrabold text-xl md:text-2xl tracking-wider text-white flex items-center gap-1.5">
-              Edison
-              <span className="text-brand-gold font-normal">ACADEMY</span>
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
+            <div className="w-9 h-9 rounded-full border border-brand-gold bg-brand-navy flex items-center justify-center overflow-hidden shrink-0 relative transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/images/eddy/avatar_head.png"
+                alt="Edison Logo"
+                fill
+                sizes="36px"
+                className="object-contain"
+              />
+            </div>
+            <span className="font-heading font-extrabold text-lg md:text-xl tracking-wider text-white flex items-center gap-1">
+              EDISON'S <span className="text-brand-gold font-light">KNOWLEDGE HUB</span>
             </span>
           </Link>
 
