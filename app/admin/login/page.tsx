@@ -34,18 +34,38 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
+      // Test Supabase connection first
+      const { data: testData, error: testError } = await supabase.from('enquiries').select('count').limit(1);
+      
+      if (testError && testError.message.includes('Failed to fetch')) {
+        setErrorMsg("Cannot connect to database. Please check your internet connection or contact support.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        if (error.message.includes('Failed to fetch')) {
+          setErrorMsg("Network error: Cannot reach authentication server. Please check your internet connection.");
+        } else if (error.message.includes('Invalid login credentials')) {
+          setErrorMsg("Invalid email or password. Please try again.");
+        } else {
+          setErrorMsg(error.message);
+        }
       } else if (data.session) {
         router.push("/admin/dashboard");
       }
-    } catch (err) {
-      setErrorMsg("An unexpected error occurred. Please try again.");
+    } catch (err: any) {
+      console.error('Login error:', err);
+      if (err?.message?.includes('Failed to fetch')) {
+        setErrorMsg("Connection failed. Please check: 1) Your internet connection, 2) Supabase project is active, 3) Firewall/VPN settings.");
+      } else {
+        setErrorMsg("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
