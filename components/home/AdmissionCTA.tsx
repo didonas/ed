@@ -48,20 +48,20 @@ export default function AdmissionCTA() {
             </div>
 
             {/* CTA Action Buttons Column */}
-            <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-4 w-full justify-end">
+            <div className="lg:col-span-4 flex flex-col gap-4 w-full justify-end">
               <Button
                 href="/contact"
                 variant="gold"
-                className="w-full justify-center shadow-lg py-4 text-base font-bold uppercase tracking-wider"
+                className="w-full justify-center shadow-lg py-3 sm:py-4 text-sm sm:text-base font-bold uppercase tracking-wider"
               >
-                Register Enquiry <ArrowRight className="w-5 h-5 ml-1" />
+                Register Enquiry <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />
               </Button>
               <a
                 href="tel:+919876543210"
-                className="w-full py-4 rounded-lg border-2 border-white/20 hover:border-white text-white hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide"
+                className="w-full py-3 sm:py-4 rounded-lg border-2 border-white/20 hover:border-white text-white hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold tracking-wide"
               >
-                <Phone className="w-4 h-4 text-brand-gold" />
-                <span>Call Admissions: +91 98765 43210</span>
+                <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-brand-gold shrink-0" />
+                <span className="break-words text-center">Call Admissions: +91 98765 43210</span>
               </a>
             </div>
           </div>

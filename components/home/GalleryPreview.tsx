@@ -40,7 +40,7 @@ export default function GalleryPreview() {
           description="Take a visual tour through our state-of-the-art labs, modern smart classrooms, interactive seminars, and student activities."
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
           {images.map((image, index) => (
             <motion.div
               key={index}

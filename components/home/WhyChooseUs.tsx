@@ -41,7 +41,7 @@ export default function WhyChooseUs() {
           description="We provide more than just lectures. We curate an ecosystem that inspires discipline, builds understanding, and delivers excellent academic results."
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {reasons.map((reason, i) => (
             <motion.div
               key={i}
@@ -50,7 +50,7 @@ export default function WhyChooseUs() {
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               whileHover={{ y: -8 }}
-              className="bg-brand-cream/30 p-8 rounded-2xl border border-brand-navy/5 hover:border-brand-gold/30 hover:bg-white transition-all duration-300 shadow-sm hover:shadow-lg flex flex-col items-start text-left"
+              className="bg-brand-cream/30 p-6 sm:p-8 rounded-2xl border border-brand-navy/5 hover:border-brand-gold/30 hover:bg-white transition-all duration-300 shadow-sm hover:shadow-lg flex flex-col items-start text-left"
             >
               <div className="p-3 bg-white rounded-xl border border-brand-gold/10 shadow-sm mb-6 flex items-center justify-center">
                 {reason.icon}

@@ -52,7 +52,7 @@ export default function FacultyHighlight() {
           description="Meet our team of visionary educators, veteran teachers, and researchers dedicated to mentoring students towards outstanding academic landmarks."
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 mb-12">
           {teachers.map((teacher, index) => (
             <motion.div
               key={index}

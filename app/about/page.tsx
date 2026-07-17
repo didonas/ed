@@ -181,7 +181,7 @@ export default function AboutPage() {
             description="A visual look at how we expanded our campus, faculty strength, and success rates over the years."
           />
 
-          <div className="relative border-l border-brand-gold/30 md:border-l-0 md:before:absolute md:before:top-1/2 md:before:left-0 md:before:w-full md:before:h-[1px] md:before:bg-brand-gold/30 md:before:-translate-y-1/2 flex flex-col md:flex-row justify-between gap-12 md:gap-6 pl-6 md:pl-0 pt-4 items-stretch">
+          <div className="relative border-l border-brand-gold/30 md:border-l-0 md:before:absolute md:before:top-1/2 md:before:left-0 md:before:w-full md:before:h-[1px] md:before:bg-brand-gold/30 md:before:-translate-y-1/2 flex flex-col md:flex-row justify-between gap-8 md:gap-6 pl-6 md:pl-0 pt-4 items-stretch">
             {milestones.map((m, i) => (
               <motion.div
                 key={i}

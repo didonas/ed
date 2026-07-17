@@ -43,7 +43,7 @@ export default function Facilities() {
           description="We provide students with a comfortable, resourceful, and technologically advanced learning environment to help them focus entirely on academic growth."
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
           {facilities.map((facility, index) => (
             <motion.div
               key={index}

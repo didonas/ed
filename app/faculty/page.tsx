@@ -124,7 +124,7 @@ export default function FacultyPage() {
       <section className="py-16 md:py-24 bg-brand-cream/15">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Tab Filtering */}
-          <div id="faculty-filters-bar" className="flex flex-wrap justify-center gap-3 mb-12 md:mb-16">
+          <div id="faculty-filters-bar" className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 md:mb-16">
             {depts.map((d) => (
               <button
                 key={d.id}
@@ -141,7 +141,7 @@ export default function FacultyPage() {
           </div>
 
           {/* Faculty Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
             <AnimatePresence mode="wait">
               {filteredFaculty.map((member, index) => (
                 <motion.div

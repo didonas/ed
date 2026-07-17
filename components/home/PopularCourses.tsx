@@ -63,7 +63,7 @@ export default function PopularCourses() {
           description="Designed by veteran educators, our structured courses ensure conceptual mastery, regular evaluation, and holistic success in examinations."
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
           {courses.map((course, index) => (
             <framerMotion.div
               key={index}

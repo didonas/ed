@@ -115,7 +115,7 @@ export default function CoursesPage() {
       <section className="py-16 md:py-24 bg-brand-cream/15">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Tab Filtering Buttons */}
-          <div id="courses-filters-bar" className="flex flex-wrap justify-center gap-3 mb-12 md:mb-16">
+          <div id="courses-filters-bar" className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 md:mb-16">
             {categories.map((cat) => (
               <button
                 key={cat.id}
@@ -132,7 +132,7 @@ export default function CoursesPage() {
           </div>
 
           {/* Courses Listing Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
             <AnimatePresence mode="wait">
               {filteredCourses.map((course, index) => (
                 <motion.div

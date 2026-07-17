@@ -55,7 +55,7 @@ export default function Testimonials() {
         />
 
         <div className="max-w-4xl mx-auto">
-          <div className="relative min-h-[320px] sm:min-h-[260px] bg-white/5 backdrop-blur-md rounded-2xl p-8 md:p-12 border border-white/10 flex flex-col justify-between">
+          <div className="relative min-h-[380px] sm:min-h-[320px] md:min-h-[260px] bg-white/5 backdrop-blur-md rounded-2xl p-6 sm:p-8 md:p-12 border border-white/10 flex flex-col justify-between">
             <Quote className="absolute top-6 right-8 w-16 h-16 text-brand-gold/10 pointer-events-none" />
 
             <AnimatePresence mode="wait">

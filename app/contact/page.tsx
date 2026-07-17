@@ -330,15 +330,15 @@ export default function ContactPage() {
       {/* Google Maps Section */}
       <section className="w-full h-[450px] relative bg-brand-cream border-t border-brand-gold/10">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3502.8315264380625!2d77.1843231!3d28.5912836!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d1d6438b4d8d1%3A0xe5a3637e6f8ef94!2sChanakyapuri%2C%20New%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3929.4920785164286!2d77.42896847501917!3d8.179417291839363!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b04f1a5796122af%3A0x12055d8a73a2ac6b!2sNEET%20CRASH%20COURSE%20NAGARCOIL-%20EDISON&#39;S%20KNOWLEDGE%20HUB!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
           width="100%"
           height="100%"
           style={{ border: 0 }}
           allowFullScreen={true}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          title="Edison's Knowledge Hub Campus Location Map"
-          className="grayscale hover:grayscale-0 transition-all duration-500"
+          title="Edison's Knowledge Hub - NEET Crash Course Nagercoil Campus Location"
+          className="rounded-lg grayscale hover:grayscale-0 transition-all duration-500"
         />
       </section>
     </div>

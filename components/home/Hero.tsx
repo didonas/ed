@@ -41,7 +41,7 @@ export default function Hero() {
       <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-brand-gold/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-orange/5 rounded-full blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 z-10 w-full">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-28 z-10 w-full">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -50,7 +50,7 @@ export default function Hero() {
         >
           {/* Tagline Badge */}
           <motion.div variants={itemVariants} className="inline-block mb-4">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-gold text-brand-navy shadow-lg shadow-brand-gold/10 border border-brand-gold/20">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wider bg-brand-gold text-brand-navy shadow-lg shadow-brand-gold/10 border border-brand-gold/20">
               <span className="w-2 h-2 rounded-full bg-brand-orange animate-ping" />
               Admissions Open 2026-27
             </span>
@@ -59,7 +59,7 @@ export default function Hero() {
           {/* Main Hero Headline */}
           <motion.h1
             variants={itemVariants}
-            className="font-heading text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6"
+            className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-4 sm:mb-6"
           >
             <span className="block">Empowering Minds,</span>
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-brand-gold via-brand-orange to-brand-gold">
@@ -70,7 +70,7 @@ export default function Hero() {
           {/* Subtitle */}
           <motion.p
             variants={itemVariants}
-            className="text-base sm:text-lg lg:text-xl text-brand-cream/80 font-light leading-relaxed mb-8 max-w-2xl"
+            className="text-sm sm:text-base md:text-lg lg:text-xl text-brand-cream/80 font-light leading-relaxed mb-6 sm:mb-8 max-w-2xl"
           >
             Experience a premium academic environment with expert faculty, tailored curricula, 
             and hands-on mentorship that ensures students excel in examinations and life.
@@ -79,12 +79,12 @@ export default function Hero() {
           {/* Call-to-Actions */}
           <motion.div
             variants={itemVariants}
-            className="flex flex-wrap gap-4 mb-16"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-12 sm:mb-16"
           >
-            <Button href="/courses" variant="gold" className="px-8 py-4 text-base shadow-xl border-2 border-transparent">
-              Explore Courses <ArrowRight className="w-5 h-5" />
+            <Button href="/courses" variant="gold" className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base shadow-xl border-2 border-transparent w-full sm:w-auto justify-center">
+              Explore Courses <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
-            <Button href="/contact" variant="outline" className="!border-white !text-white hover:!bg-white hover:!text-brand-navy px-8 py-4 text-base">
+            <Button href="/contact" variant="outline" className="!border-white !text-white hover:!bg-white hover:!text-brand-navy px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base w-full sm:w-auto justify-center">
               Talk to Advisor
             </Button>
           </motion.div>
@@ -92,35 +92,35 @@ export default function Hero() {
           {/* Trust Highlights Grid */}
           <motion.div
             variants={itemVariants}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t border-white/10"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-white/10"
           >
             {[
               {
-                icon: <GraduationCap className="w-5 h-5 text-brand-gold" />,
+                icon: <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-brand-gold" />,
                 title: "Expert Mentorship",
                 desc: "IIT/IIM & PhD Faculty",
               },
               {
-                icon: <BookOpen className="w-5 h-5 text-brand-gold" />,
+                icon: <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-brand-gold" />,
                 title: "Structured Courses",
                 desc: "Science, Commerce & Humanities",
               },
               {
-                icon: <Award className="w-5 h-5 text-brand-gold" />,
+                icon: <Award className="w-4 h-4 sm:w-5 sm:h-5 text-brand-gold" />,
                 title: "Proven Success",
                 desc: "98% Board & Competitive Clears",
               },
             ].map((feature, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3.5 bg-white/5 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/5 h-full shadow-sm"
+                className="flex items-center gap-2.5 sm:gap-3.5 bg-white/5 backdrop-blur-sm px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/5 h-full shadow-sm"
               >
-                <div className="p-2 rounded-md bg-white/5 text-brand-gold">
+                <div className="p-1.5 sm:p-2 rounded-md bg-white/5 text-brand-gold shrink-0">
                   {feature.icon}
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white">{feature.title}</h4>
-                  <p className="text-xs text-brand-cream/60 font-light">{feature.desc}</p>
+                  <h4 className="text-xs sm:text-sm font-semibold text-white">{feature.title}</h4>
+                  <p className="text-[10px] sm:text-xs text-brand-cream/60 font-light">{feature.desc}</p>
                 </div>
               </div>
             ))}

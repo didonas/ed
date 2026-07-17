@@ -96,7 +96,7 @@ export default function GalleryPage() {
       <section className="py-16 md:py-24 bg-brand-cream/15">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filters Bar */}
-          <div id="gallery-filters-bar" className="flex flex-wrap justify-center gap-3 mb-12">
+          <div id="gallery-filters-bar" className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12">
             {filters.map((f) => (
               <button
                 key={f.id}
@@ -113,7 +113,7 @@ export default function GalleryPage() {
           </div>
 
           {/* Masonry Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             <AnimatePresence mode="wait">
               {filteredItems.map((item, index) => (
                 <motion.div

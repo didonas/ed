@@ -37,7 +37,7 @@ export default function Footer() {
               innovative courses, and mentorship that shapes the leaders of tomorrow. 
               Trust built through academic excellence since 2012.
             </p>
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-3 pt-2 flex-wrap">
               <a
                 href="https://facebook.com"
                 target="_blank"
@@ -50,7 +50,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/edisonshubnagercoil/"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center hover:bg-brand-gold hover:border-brand-gold hover:text-brand-navy transition-all duration-300"

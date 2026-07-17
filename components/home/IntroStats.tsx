@@ -88,7 +88,7 @@ export default function IntroStats() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-6"
+            className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
           >
             {stats.map((stat, index) => (
               <motion.div
