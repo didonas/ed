@@ -338,7 +338,7 @@ export default function ContactPage() {
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           title="Edison's Knowledge Hub - NEET Crash Course Nagercoil Campus Location"
-          className="rounded-lg grayscale hover:grayscale-0 transition-all duration-500"
+          className="rounded-lg transition-all duration-500"
         />
       </section>
     </div>

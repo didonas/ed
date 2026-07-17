@@ -63,7 +63,7 @@ export default function Navbar() {
                 priority
               />
             </div>
-            <span className="font-heading font-extrabold text-lg md:text-xl tracking-wider text-white flex items-center gap-1">
+            <span className="font-heading font-extrabold text-sm sm:text-base md:text-lg lg:text-xl tracking-wider text-white flex items-center gap-1 whitespace-nowrap">
               EDISON'S <span className="text-brand-gold font-light">KNOWLEDGE HUB</span>
             </span>
           </Link>
